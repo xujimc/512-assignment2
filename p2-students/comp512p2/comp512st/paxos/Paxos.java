@@ -28,6 +28,7 @@ public class Paxos
 
 	GCL gcl;
 	FailCheck failCheck;
+	private final Logger logger;
 	private final String myProcess;
 	private final int numProcesses;
 	private final int majority;
@@ -59,6 +60,7 @@ public class Paxos
 	{
 		// Rember to call the failCheck.checkFailure(..) with appropriate arguments throughout your Paxos code to force fail points if necessary.
 		this.failCheck = failCheck;
+		this.logger = logger;
 		this.myProcess = myProcess;
 		this.numProcesses = allGroupProcesses.length;
 		this.majority = numProcesses / 2 + 1;
@@ -196,7 +198,10 @@ public class Paxos
 	private synchronized void markDecided(int slot, Object v)
 	{
 		if (decided.putIfAbsent(slot, v) == null && v instanceof Proposal)
+		{
 			decidedIds.add(((Proposal) v).id);
+			logger.info("PERF DECIDED " + slot + " " + System.nanoTime() + " " + ((Proposal) v).id);
+		}
 		notifyAll();
 	}
 
@@ -256,8 +261,12 @@ public class Paxos
 		{
 			mine = new Proposal(myProcess + "#" + (++moveSeq), val);
 		}
+		long start = System.nanoTime();
+		int attempts = 0;
+		int timeouts = 0;
 		while (!isMoveDecided(mine.id))
 		{
+			attempts++;
 			int slot = nextSlot();
 			Ballot ballot;
 			synchronized (this)
@@ -278,6 +287,7 @@ public class Paxos
 			{
 				if (Thread.currentThread().isInterrupted())
 					return;
+				timeouts++;
 				backoff();
 				continue;
 			}
@@ -299,6 +309,7 @@ public class Paxos
 			{
 				if (Thread.currentThread().isInterrupted())
 					return;
+				timeouts++;
 				backoff();
 				continue;
 			}
@@ -311,6 +322,7 @@ public class Paxos
 			markDecided(slot, chosen);
 			gcl.broadcastMsg(PaxosMsg.confirm(slot, ballot, chosen));
 		}
+		logger.info("PERF DONE " + mine.id + " " + start + " " + System.nanoTime() + " " + attempts + " " + timeouts);
 	}
 
 	// This is what the application layer is calling to figure out what is the next message in the total order.
