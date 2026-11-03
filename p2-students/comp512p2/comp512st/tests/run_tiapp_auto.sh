@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #TODO set this to where your code and jar file root dir is
-BASEDIR=$HOME/Documents/school/512/A2/512-assignment2/p2-students/comp512p2
+BASEDIR=$HOME/comp512/p2
 
 #TODO update your group number here in place of XX
 group=19
@@ -12,8 +12,7 @@ gameid=game-$group-99
 
 #TODO edit these entries to put the name of the server that you are using and the associated ports.
 # Remember to start the script from this host
-#export autotesthost=tr-open-01.cs.mcgill.ca
-export autotesthost=Jimmys-MacBook-Air.local
+export autotesthost=tr-open-01.cs.mcgill.ca
 # player1 -> process 1, player 2 -> process 2, etc .. add more depending on how many players are playing.
 # Script automatically counts the variables to figure out the number of players.
 export process1=${autotesthost}:401$group
